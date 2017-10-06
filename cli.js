@@ -6,16 +6,17 @@ var humanSize = require('human-size');
 var ini = require('ini');
 var fs = require('fs');
 var path = require('path');
-var s3 = require('s3');
+var s3 = require('@cameni/s3');
 var url = require('url');
 var http = require('http');
 var https = require('https');
 var argOptions = {
   'default': {
-    'config': path.join(osenv.home(), '.s3cfg'),
+    'config': '.s3cfg',//path.join(osenv.home(), '.s3cfg'),
     'delete-removed': false,
     'max-sockets': 20,
-    'region': 'us-east-1',
+    'region': 'nyc3',
+    'endpoint': 'nyc3.digitaloceanspaces.com',
     'default-mime-type': null,
     'add-header': null,
   },
@@ -88,6 +89,7 @@ function setup(secretAccessKey, accessKeyId) {
       secretAccessKey: secretAccessKey,
       sslEnabled: !args.insecure,
       region: args.region,
+      endpoint: args.endpoint,
     },
   });
   var cmd = args._.shift();
