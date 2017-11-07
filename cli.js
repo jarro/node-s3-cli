@@ -176,7 +176,7 @@ function cmdList() {
     });
   });
   finder.on('error', function(err) {
-    console.error("Error: " + err.message);
+    console.error("Error (list): " + JSON.stringify(err));//err.message);
     process.exit(1);
   });
 }
@@ -212,7 +212,7 @@ function cmdDelete() {
     };
     var deleter = client.deleteObjects(params);
     deleter.on('error', function(err) {
-      console.error("Error: " + err.message);
+      console.error("Error (deleter): " + JSON.stringify(err));//err.message);
       process.exit(1);
     });
   }
@@ -289,7 +289,7 @@ function cmdCp() {
 
   var copier = client.copyObject(s3Params);
   copier.on('error', function(err) {
-    console.error("Error: " + err.message);
+    console.error("Error (copy): " + JSON.stringify(err));//err.message);
     process.exit(1);
   });
 }
@@ -309,7 +309,7 @@ function cmdMv() {
 
   var mover = client.moveObject(s3Params);
   mover.on('error', function(err) {
-    console.error("Error: " + err.message);
+    console.error("Error (move): " + JSON.stringify(err));//err.message);
     process.exit(1);
   });
 }
@@ -368,12 +368,12 @@ function setUpProgress(o, notBytes, doneText) {
   });
   o.on('error', function(err) {
     clearInterval(progressInterval);
-    process.stderr.write("\nError: " + err.message + "\n");
+    process.stderr.write("\nError (progress): " + JSON.stringify(err) + "\n");
     process.exit(1);
   });
 
   function printProgress() {
-    var percent = Math.floor(o.progressAmount / o.progressTotal * 100);
+    var percent = Math.floor(o.progressAmount * 100.0 / o.progressTotal);
     var amt = notBytes ? String(o.progressAmount) : fmtBytes(o.progressAmount);
     var total = notBytes ? String(o.progressTotal) : fmtBytes(o.progressTotal);
     var parts = [];
