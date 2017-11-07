@@ -1,0 +1,13 @@
+mkdir outerra/bin/s3-upload
+git clone https://github.com/cameni/node-s3-cli node-s3-cli
+git clone https://github.com/cameni/node-s3-client node-s3-client
+
+cd ./node-s3-client
+npm link
+
+cd ./node-s3-cli
+npm install
+npm link @cameni/s3
+
+node cli.js ls s3://anteworld/planetdata/
+node cli.js sync s3://anteworld/planetdata/earth7/ <destpath>
