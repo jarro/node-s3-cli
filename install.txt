@@ -9,5 +9,7 @@ cd ./node-s3-cli
 npm install
 npm link @cameni/s3
 
+// copy/create .s3cfg in node-s3-cli/.s3cfg
+
 node cli.js ls s3://anteworld/planetdata/
 node cli.js sync s3://anteworld/planetdata/earth7/ <destpath>
