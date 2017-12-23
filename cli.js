@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 
 var minimist = require('minimist');
 var osenv = require('osenv');
@@ -19,6 +18,7 @@ var argOptions = {
     'endpoint': 'nyc3.digitaloceanspaces.com',
     'default-mime-type': null,
     'add-header': null,
+    'ignore': null,
   },
   'boolean': [
     'recursive',
@@ -30,6 +30,7 @@ var argOptions = {
   ],
   'alias': {
     'P': 'acl-public',
+    'R': 'recursive',
   },
 };
 var args = minimist(process.argv.slice(2), argOptions);
@@ -91,6 +92,7 @@ function setup(secretAccessKey, accessKeyId) {
       region: args.region,
       endpoint: args.endpoint,
     },
+    ignore: args.ignore,
   });
   var cmd = args._.shift();
   var fn = fns[cmd];
