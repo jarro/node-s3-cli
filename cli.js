@@ -16,6 +16,7 @@ var argOptions = {
     'max-sockets': 20,
     'region': 'nyc3',
     'endpoint': 'nyc3.digitaloceanspaces.com',
+    'signature-version': 'v2',
     'default-mime-type': null,
     'add-header': null,
     'ignore': null,
@@ -27,6 +28,7 @@ var argOptions = {
     'acl-public',
     'acl-private',
     'no-guess-mime-type',
+    'requester-pays',
   ],
   'alias': {
     'P': 'acl-public',
@@ -91,8 +93,13 @@ function setup(secretAccessKey, accessKeyId) {
       sslEnabled: !args.insecure,
       region: args.region,
       endpoint: args.endpoint,
+      signatureVersion: args['signature-version'],
     },
     ignore: args.ignore,
+    s3RetryDelay: 20000,
+    s3RetryCount: 3,
+    maxAsyncS3: 8,
+    maxAsyncS3Del: 2,
   });
   var cmd = args._.shift();
   var fn = fns[cmd];
@@ -129,7 +136,10 @@ function cmdSync() {
   var parts = parseS3Url(s3Url);
   s3Params.Prefix = parts.key;
   s3Params.Bucket = parts.bucket;
-
+  
+  if (args['requester-pays'])
+    s3Params.RequestPayer = "requester";
+  
   parseAddHeaders(s3Params);
 
   var params = {
@@ -168,6 +178,8 @@ function cmdList() {
       Delimiter: recursive ? null : '/',
     },
   };
+  if (args['requester-pays'])
+    params.s3Params.RequestPayer = "requester";
   var finder = client.listObjects(params);
   finder.on('data', function(data) {
     data.CommonPrefixes.forEach(function(dirObject) {
@@ -272,6 +284,9 @@ function cmdGet() {
       Key: parts.key,
     },
   };
+  if (args['requester-pays'])
+    params.s3Params.RequestPayer = "requester";
+  
   var downloader = client.downloadFile(params);
   setUpProgress(downloader);
 }
@@ -389,7 +404,7 @@ function setUpProgress(o, notBytes, doneText) {
       parts.push(o.deleteAmount + "/" + o.deleteTotal + " deleted");
     }
     if (o.progressMd5Amount > 0 && !o.doneMd5) {
-      parts.push(fmtBytes(o.progressMd5Amount) + "/" + fmtBytes(o.progressMd5Total) + " MD5");
+      parts.push(fmtBytes(o.progressMd5Amount) + "/" + fmtBytes(o.progressMd5Total) + " MD5 ");
     }
     if (o.progressTotal > 0) {
       if (!start) start = new Date();
