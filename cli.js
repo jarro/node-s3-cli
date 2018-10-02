@@ -31,6 +31,7 @@ var argOptions = {
     'acl-private',
     'no-guess-mime-type',
     'requester-pays',
+    'reverse',
   ],
   'alias': {
     'P': 'acl-public',
@@ -138,8 +139,9 @@ function cmdSyncList() {
 
 function cmdSync(fndone) {
   expectArgCount(2);
-  var source = args._[0];
-  var dest = args._[1];
+  var reverse = args['reverse'];
+  var source = reverse ? args._[1] : args._[0];
+  var dest = reverse ? args._[0] : args._[1];
 
   var sourceS3 = isS3Url(source);
   var destS3 = isS3Url(dest);
