@@ -14,12 +14,14 @@ var argOptions = {
     'config': '.s3cfg',//path.join(osenv.home(), '.s3cfg'),
     'delete-removed': false,
     'max-sockets': 20,
+    'max-async': 8,
     'region': 'nyc3',
     'endpoint': 'nyc3.digitaloceanspaces.com',
     'signature-version': 'v2',
     'default-mime-type': null,
     'add-header': null,
     'ignore': null,
+    'list' : null,
   },
   'boolean': [
     'recursive',
@@ -38,7 +40,7 @@ var argOptions = {
 var args = minimist(process.argv.slice(2), argOptions);
 
 var fns = {
-  'sync': cmdSync,
+  'sync': cmdSyncList,
   'ls': cmdList,
   'help': cmdHelp,
   'del': cmdDelete,
@@ -98,7 +100,7 @@ function setup(secretAccessKey, accessKeyId) {
     ignore: args.ignore,
     s3RetryDelay: 20000,
     s3RetryCount: 3,
-    maxAsyncS3: 8,
+    maxAsyncS3: parseInt(args['max-async'], 8),
     maxAsyncS3Del: 2,
   });
   var cmd = args._.shift();
@@ -107,7 +109,34 @@ function setup(secretAccessKey, accessKeyId) {
   fn();
 }
 
-function cmdSync() {
+function cmdSyncList() {
+  if (args.list) {
+    var array = fs.readFileSync(args.list).toString().split("\n");
+    var a0 = args._[0];
+    var a1 = args._[1];
+    var nparallel = 1;
+    
+    function next(iter) {
+      if (iter < array.length) {
+        process.stderr.write("\nprocessing " + array[iter] + "\n");
+        args._[0] = a0 + array[iter];
+        args._[1] = a1 + array[iter];
+        cmdSync(function() {
+          process.stderr.write("\ndone " + array[iter] + "\n");
+          next(iter+nparallel);
+        });
+      }
+    }
+    
+    //launch in parallel
+    for (var i=0; i<nparallel; ++i)
+      next(i);
+  }
+  else
+    cmdSync();
+}
+
+function cmdSync(fndone) {
   expectArgCount(2);
   var source = args._[0];
   var dest = args._[1];
@@ -150,7 +179,7 @@ function cmdSync() {
     defaultContentType: getDefaultContentType(),
   };
   var syncer = method.call(client, params);
-  setUpProgress(syncer);
+  setUpProgress(syncer, false, fndone);
 }
 
 function uploadGetS3Params(filePath, stat, callback) {
@@ -263,7 +292,7 @@ function cmdPut() {
   } else {
     doneText = "done";
   }
-  setUpProgress(uploader, false, doneText);
+  setUpProgress(uploader, false, function() {process.stderr.write("\n" + doneText + "\n");});
 }
 
 function cmdGet() {
@@ -373,15 +402,16 @@ function getAcl() {
   return acl;
 }
 
-function setUpProgress(o, notBytes, doneText) {
+function setUpProgress(o, notBytes, donefn) {
   var start = null;
-  doneText = doneText || "done";
+  donefn = donefn || function() {process.stderr.write("\ndone\n");};
   var printFn = process.stderr.isTTY ? printProgress : noop;
   printFn();
   var progressInterval = setInterval(printFn, 100);
   o.on('end', function() {
     clearInterval(progressInterval);
-    process.stderr.write("\n" + doneText + "\n");
+    //process.stderr.write("\n" + doneText + "\n");
+    if (donefn) donefn();
   });
   o.on('error', function(err) {
     clearInterval(progressInterval);
