@@ -22,6 +22,7 @@ var argOptions = {
     'add-header': null,
     'ignore': null,
     'list' : null,
+    'MD5' : true,
   },
   'boolean': [
     'recursive',
@@ -32,6 +33,7 @@ var argOptions = {
     'no-guess-mime-type',
     'requester-pays',
     'reverse',
+    'MD5'
   ],
   'alias': {
     'P': 'acl-public',
@@ -99,6 +101,7 @@ function setup(secretAccessKey, accessKeyId) {
       signatureVersion: args['signature-version'],
     },
     ignore: args.ignore,
+    MD5: args['MD5'],
     s3RetryDelay: 20000,
     s3RetryCount: 3,
     maxAsyncS3: parseInt(args['max-async'], 8),
@@ -116,7 +119,7 @@ function cmdSyncList() {
     var a0 = args._[0];
     var a1 = args._[1];
     var nparallel = 1;
-    
+
     function next(iter) {
       if (iter < array.length) {
         process.stderr.write("\nprocessing " + array[iter] + "\n");
@@ -128,7 +131,7 @@ function cmdSyncList() {
         });
       }
     }
-    
+
     //launch in parallel
     for (var i=0; i<nparallel; ++i)
       next(i);
@@ -167,10 +170,10 @@ function cmdSync(fndone) {
   var parts = parseS3Url(s3Url);
   s3Params.Prefix = parts.key;
   s3Params.Bucket = parts.bucket;
-  
+
   if (args['requester-pays'])
     s3Params.RequestPayer = "requester";
-  
+
   parseAddHeaders(s3Params);
 
   var params = {
@@ -317,7 +320,7 @@ function cmdGet() {
   };
   if (args['requester-pays'])
     params.s3Params.RequestPayer = "requester";
-  
+
   var downloader = client.downloadFile(params);
   setUpProgress(downloader);
 }
