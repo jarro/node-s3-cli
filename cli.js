@@ -1,4 +1,4 @@
-
+#!/usr/bin/env node
 var minimist = require('minimist');
 var osenv = require('osenv');
 var humanSize = require('human-size');
